@@ -12,7 +12,9 @@ import {
   styled,
   tableCellClasses,
   Box,
+  TableSortLabel,
 } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 
 interface Policy {
   id: number;
@@ -70,15 +72,18 @@ const policies: Policy[] = Array.from({ length: 50 }, (_, id) => ({
   type: ["open", "closed", "test"][id % 3] as "open" | "closed" | "test",
 }));
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
+const StyledTableCell = styled(TableCell)<{ isSorted?: boolean }>(
+  ({ theme, isSorted }) => ({
+    [`&.${tableCellClasses.head}`]: {
+      backgroundColor: theme.palette.common.black,
+      color: theme.palette.common.white,
+      fontWeight: isSorted ? "bold" : "normal",
+    },
+    [`&.${tableCellClasses.body}`]: {
+      fontSize: 14,
+    },
+  })
+);
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   "&:nth-of-type(odd)": {
@@ -89,13 +94,50 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+type Order = "asc" | "desc";
+
+interface HeadCell {
+  id: keyof Policy;
+  label: string;
+}
+
+const headCells: HeadCell[] = [
+  { id: "name", label: "Name" },
+  { id: "inceptionDate", label: "Inception Date" },
+  { id: "createdDate", label: "Created Date" },
+  { id: "createdBy", label: "Created By" },
+  { id: "modifiedBy", label: "Modified By" },
+  { id: "type", label: "Type" },
+];
+
 const PolicyList: React.FC = () => {
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
+  const [order, setOrder] = useState<Order>("asc");
+  const [orderBy, setOrderBy] = useState<keyof Policy>("name");
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
+
+  const handleRequestSort = (
+    event: React.MouseEvent<unknown>,
+    property: keyof Policy
+  ) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  const sortedPolicies = [...policies].sort((a, b) => {
+    if (a[orderBy] < b[orderBy]) {
+      return order === "asc" ? -1 : 1;
+    }
+    if (a[orderBy] > b[orderBy]) {
+      return order === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
 
   return (
     <Container
@@ -110,16 +152,41 @@ const PolicyList: React.FC = () => {
           <Table sx={{ minWidth: 700 }} aria-label="customized table">
             <TableHead>
               <TableRow>
-                <StyledTableCell>Name</StyledTableCell>
-                <StyledTableCell>Inception Date</StyledTableCell>
-                <StyledTableCell>Created Date</StyledTableCell>
-                <StyledTableCell>Created By</StyledTableCell>
-                <StyledTableCell>Modified By</StyledTableCell>
-                <StyledTableCell>Type</StyledTableCell>
+                {headCells.map((headCell) => (
+                  <StyledTableCell
+                    key={headCell.id}
+                    sortDirection={orderBy === headCell.id ? order : false}
+                    isSorted={orderBy === headCell.id}
+                  >
+                    <TableSortLabel
+                      active={orderBy === headCell.id}
+                      direction={orderBy === headCell.id ? order : "asc"}
+                      onClick={(event) => handleRequestSort(event, headCell.id)}
+                      sx={{
+                        color: "inherit", // ensure it inherits the color
+                        "&.Mui-active": {
+                          color: "inherit", // ensure active state inherits the color
+                        },
+                        ".MuiTableSortLabel-icon": {
+                          color: "inherit !important", // ensure icon color remains the same
+                        },
+                      }}
+                    >
+                      {headCell.label}
+                      {orderBy === headCell.id ? (
+                        <Box component="span" sx={visuallyHidden}>
+                          {order === "desc"
+                            ? "sorted descending"
+                            : "sorted ascending"}
+                        </Box>
+                      ) : null}
+                    </TableSortLabel>
+                  </StyledTableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {policies
+              {sortedPolicies
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((policy) => (
                   <StyledTableRow key={policy.id}>
