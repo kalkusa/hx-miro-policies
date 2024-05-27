@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Container,
   Table,
@@ -13,8 +13,15 @@ import {
   tableCellClasses,
   Box,
   TableSortLabel,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import Filter from "./Filter";
 
 interface Policy {
   id: number;
@@ -115,6 +122,20 @@ const PolicyList: React.FC = () => {
   const rowsPerPage = 10;
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Policy>("name");
+  const [searchName, setSearchName] = useState("");
+  const [searchType, setSearchType] = useState("");
+
+  const handleSearch = useCallback((name: string, type: string) => {
+    setSearchName(name);
+    setSearchType(type);
+    setPage(0); // Reset to the first page
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setSearchName("");
+    setSearchType("");
+    setPage(0); // Reset to the first page
+  }, []);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -129,7 +150,13 @@ const PolicyList: React.FC = () => {
     setOrderBy(property);
   };
 
-  const sortedPolicies = [...policies].sort((a, b) => {
+  const filteredPolicies = policies.filter(
+    (policy) =>
+      policy.name.toLowerCase().includes(searchName.toLowerCase()) &&
+      (searchType ? policy.type === searchType : true)
+  );
+
+  const sortedPolicies = [...filteredPolicies].sort((a, b) => {
     if (a[orderBy] < b[orderBy]) {
       return order === "asc" ? -1 : 1;
     }
@@ -146,6 +173,7 @@ const PolicyList: React.FC = () => {
     >
       <Box sx={{ flex: "0 1 auto" }}>
         <h1>Policy List</h1>
+        <Filter onSearch={handleSearch} onReset={handleReset} />
       </Box>
       <Box sx={{ flex: "1 1 auto", overflow: "auto" }}>
         <TableContainer component={Paper}>
@@ -163,12 +191,12 @@ const PolicyList: React.FC = () => {
                       direction={orderBy === headCell.id ? order : "asc"}
                       onClick={(event) => handleRequestSort(event, headCell.id)}
                       sx={{
-                        color: "inherit", // ensure it inherits the color
+                        color: "inherit",
                         "&.Mui-active": {
-                          color: "inherit", // ensure active state inherits the color
+                          color: "inherit",
                         },
                         ".MuiTableSortLabel-icon": {
-                          color: "inherit !important", // ensure icon color remains the same
+                          color: "inherit !important",
                         },
                       }}
                     >
@@ -206,7 +234,7 @@ const PolicyList: React.FC = () => {
         <TablePagination
           rowsPerPageOptions={[]}
           component="div"
-          count={policies.length}
+          count={filteredPolicies.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
