@@ -124,16 +124,25 @@ const PolicyList: React.FC = () => {
   const [orderBy, setOrderBy] = useState<keyof Policy>("name");
   const [searchName, setSearchName] = useState("");
   const [searchType, setSearchType] = useState("");
+  const [searchCreatedBy, setSearchCreatedBy] = useState("");
+  const [searchModifiedBy, setSearchModifiedBy] = useState("");
 
-  const handleSearch = useCallback((name: string, type: string) => {
-    setSearchName(name);
-    setSearchType(type);
-    setPage(0); // Reset to the first page
-  }, []);
+  const handleSearch = useCallback(
+    (name: string, type: string, createdBy: string, modifiedBy: string) => {
+      setSearchName(name);
+      setSearchType(type);
+      setSearchCreatedBy(createdBy);
+      setSearchModifiedBy(modifiedBy);
+      setPage(0); // Reset to the first page
+    },
+    []
+  );
 
   const handleReset = useCallback(() => {
     setSearchName("");
     setSearchType("");
+    setSearchCreatedBy("");
+    setSearchModifiedBy("");
     setPage(0); // Reset to the first page
   }, []);
 
@@ -153,7 +162,15 @@ const PolicyList: React.FC = () => {
   const filteredPolicies = policies.filter(
     (policy) =>
       policy.name.toLowerCase().includes(searchName.toLowerCase()) &&
-      (searchType ? policy.type === searchType : true)
+      (searchType ? policy.type === searchType : true) &&
+      (searchCreatedBy
+        ? policy.createdBy.toLowerCase().includes(searchCreatedBy.toLowerCase())
+        : true) &&
+      (searchModifiedBy
+        ? policy.modifiedBy
+            .toLowerCase()
+            .includes(searchModifiedBy.toLowerCase())
+        : true)
   );
 
   const sortedPolicies = [...filteredPolicies].sort((a, b) => {

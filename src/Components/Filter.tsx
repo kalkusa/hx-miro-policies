@@ -10,21 +10,30 @@ import {
 } from "@mui/material";
 
 interface FilterProps {
-  onSearch: (name: string, type: string) => void;
+  onSearch: (
+    name: string,
+    type: string,
+    createdBy: string,
+    modifiedBy: string
+  ) => void;
   onReset: () => void;
 }
 
 const Filter: React.FC<FilterProps> = ({ onSearch, onReset }) => {
   const [name, setName] = useState("");
   const [type, setType] = useState("");
+  const [createdBy, setCreatedBy] = useState("");
+  const [modifiedBy, setModifiedBy] = useState("");
 
   const handleSearch = () => {
-    onSearch(name, type);
+    onSearch(name, type, createdBy, modifiedBy);
   };
 
   const handleReset = () => {
     setName("");
     setType("");
+    setCreatedBy("");
+    setModifiedBy("");
     onReset();
   };
 
@@ -43,6 +52,22 @@ const Filter: React.FC<FilterProps> = ({ onSearch, onReset }) => {
           variant="outlined"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          size="small"
+          sx={{ flex: 1 }}
+        />
+        <TextField
+          label="Created By"
+          variant="outlined"
+          value={createdBy}
+          onChange={(e) => setCreatedBy(e.target.value)}
+          size="small"
+          sx={{ flex: 1 }}
+        />
+        <TextField
+          label="Modified By"
+          variant="outlined"
+          value={modifiedBy}
+          onChange={(e) => setModifiedBy(e.target.value)}
           size="small"
           sx={{ flex: 1 }}
         />
