@@ -13,14 +13,9 @@ import {
   tableCellClasses,
   Box,
   TableSortLabel,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import dayjs, { Dayjs } from "dayjs";
 import Filter from "./Filter";
 
 interface Policy {
@@ -126,13 +121,35 @@ const PolicyList: React.FC = () => {
   const [searchType, setSearchType] = useState("");
   const [searchCreatedBy, setSearchCreatedBy] = useState("");
   const [searchModifiedBy, setSearchModifiedBy] = useState("");
+  const [searchCreatedDateFrom, setSearchCreatedDateFrom] =
+    useState<Dayjs | null>(null);
+  const [searchCreatedDateTo, setSearchCreatedDateTo] = useState<Dayjs | null>(
+    null
+  );
+  const [searchInceptionDateFrom, setSearchInceptionDateFrom] =
+    useState<Dayjs | null>(null);
+  const [searchInceptionDateTo, setSearchInceptionDateTo] =
+    useState<Dayjs | null>(null);
 
   const handleSearch = useCallback(
-    (name: string, type: string, createdBy: string, modifiedBy: string) => {
+    (
+      name: string,
+      type: string,
+      createdBy: string,
+      modifiedBy: string,
+      createdDateFrom: Dayjs | null,
+      createdDateTo: Dayjs | null,
+      inceptionDateFrom: Dayjs | null,
+      inceptionDateTo: Dayjs | null
+    ) => {
       setSearchName(name);
       setSearchType(type);
       setSearchCreatedBy(createdBy);
       setSearchModifiedBy(modifiedBy);
+      setSearchCreatedDateFrom(createdDateFrom);
+      setSearchCreatedDateTo(createdDateTo);
+      setSearchInceptionDateFrom(inceptionDateFrom);
+      setSearchInceptionDateTo(inceptionDateTo);
       setPage(0); // Reset to the first page
     },
     []
@@ -143,6 +160,10 @@ const PolicyList: React.FC = () => {
     setSearchType("");
     setSearchCreatedBy("");
     setSearchModifiedBy("");
+    setSearchCreatedDateFrom(null);
+    setSearchCreatedDateTo(null);
+    setSearchInceptionDateFrom(null);
+    setSearchInceptionDateTo(null);
     setPage(0); // Reset to the first page
   }, []);
 
@@ -159,8 +180,11 @@ const PolicyList: React.FC = () => {
     setOrderBy(property);
   };
 
-  const filteredPolicies = policies.filter(
-    (policy) =>
+  const filteredPolicies = policies.filter((policy) => {
+    const createdDate = dayjs(policy.createdDate);
+    const inceptionDate = dayjs(policy.inceptionDate);
+
+    return (
       policy.name.toLowerCase().includes(searchName.toLowerCase()) &&
       (searchType ? policy.type === searchType : true) &&
       (searchCreatedBy
@@ -170,8 +194,25 @@ const PolicyList: React.FC = () => {
         ? policy.modifiedBy
             .toLowerCase()
             .includes(searchModifiedBy.toLowerCase())
+        : true) &&
+      (searchCreatedDateFrom
+        ? createdDate.isAfter(searchCreatedDateFrom) ||
+          createdDate.isSame(searchCreatedDateFrom)
+        : true) &&
+      (searchCreatedDateTo
+        ? createdDate.isBefore(searchCreatedDateTo) ||
+          createdDate.isSame(searchCreatedDateTo)
+        : true) &&
+      (searchInceptionDateFrom
+        ? inceptionDate.isAfter(searchInceptionDateFrom) ||
+          inceptionDate.isSame(searchInceptionDateFrom)
+        : true) &&
+      (searchInceptionDateTo
+        ? inceptionDate.isBefore(searchInceptionDateTo) ||
+          inceptionDate.isSame(searchInceptionDateTo)
         : true)
-  );
+    );
+  });
 
   const sortedPolicies = [...filteredPolicies].sort((a, b) => {
     if (a[orderBy] < b[orderBy]) {
